@@ -1,0 +1,136 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Users {
+  id        Int      @id @default(autoincrement())
+  username  String   @unique // Unique username for login
+  password  String // Hashed password
+  email     String   @unique // Email address
+  role      UserRole @default(CUSTOMER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userDetails  UserDetails[]
+  transactions Transactions[] @relation("UserTransactions")
+  cashirRoles  Transactions[] @relation("CashierTransactions")
+  reviews      Reviews[]
+}
+
+enum UserRole {
+  ADMIN
+  CASHIER
+  CUSTOMER
+}
+
+model UserDetails {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  fullName  String
+  address   String?
+  phone     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+
+  user Users @relation(fields: [userId], references: [id])
+}
+
+model Products {
+  id           Int      @id @default(autoincrement())
+  name         String
+  description  String
+  categoriesId Int
+  price        Float
+  stock        Int
+  image        String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @default(now())
+
+  category           Categories           @relation(fields: [categoriesId], references: [id])
+  transactionDetails TransactionDetails[]
+  reviews            Reviews[]
+}
+
+model Categories {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  description String? // Optional description for categories
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now())
+
+  products Products[]
+}
+
+model Transactions {
+  id            Int               @id @default(autoincrement())
+  userId        Int
+  cashirId      Int
+  total         Float
+  status        TransactionStatus @default(PENDING)
+  paymentMethod PaymentMethod
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @default(now())
+
+  customer Users @relation("UserTransactions", fields: [userId], references: [id])
+  cashier  Users @relation("CashierTransactions", fields: [cashirId], references: [id])
+
+  transactionItems TransactionDetails[]
+}
+
+enum PaymentMethod {
+  CASH
+  QRIS
+}
+
+enum TransactionStatus {
+  PENDING
+  PAID
+  CANCELLED
+}
+
+model TransactionDetails {
+  id            Int      @id @default(autoincrement())
+  transactionId Int
+  productId     Int
+  qty           Int
+  price         Float
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @default(now())
+
+  transaction Transactions @relation(fields: [transactionId], references: [id])
+  product     Products     @relation(fields: [productId], references: [id])
+}
+
+model Inventory {
+  id        Int      @id @default(autoincrement())
+  name      String
+  stock     Int
+  price     Float
+  image     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+}
+
+model Reviews {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  productId Int
+  rating    Int      @default(0)
+  review    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+
+  user    Users    @relation(fields: [userId], references: [id])
+  product Products @relation(fields: [productId], references: [id])
+}
