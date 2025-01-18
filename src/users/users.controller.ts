@@ -19,7 +19,6 @@ export class UsersController {
     return await this.userService.getUserById(id);
   }
 
-  @Roles(UserRole.CUSTOMER) // Menentukan bahwa hanya pengguna dengan role ADMIN yang dapat mengakses endpoint ini
   @UseGuards(RolesGuard)
   @Get()
   async getAllUsers() {
