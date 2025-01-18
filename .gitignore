@@ -6,6 +6,9 @@
 # Migration
 migrations
 
+# File uploads
+uploads
+
 # Logs
 logs
 *.log
