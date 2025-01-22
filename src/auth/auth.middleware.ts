@@ -1,4 +1,10 @@
-import { HttpStatus, Injectable, NestMiddleware, Logger } from '@nestjs/common';
+import {
+  HttpStatus,
+  Injectable,
+  NestMiddleware,
+  Logger,
+  HttpException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ApiResponse } from 'src/helpers/response.helper';
 
@@ -17,23 +23,34 @@ export class AuthMiddleware implements NestMiddleware {
 
     if (!authorizationHeader) {
       this.logger.warn('Authorization header is missing.');
-      return res
-        .status(HttpStatus.UNAUTHORIZED)
-        .json(
-          ApiResponse.error(
-            HttpStatus.UNAUTHORIZED,
-            'Authorization header tidak ditemukan',
-          ),
-        );
+      throw new HttpException(
+        ApiResponse.error(
+          HttpStatus.UNAUTHORIZED,
+          'Authorization header tidak ditemukan',
+        ),
+        HttpStatus.UNAUTHORIZED,
+      );
+      // return res
+      //   .status(HttpStatus.UNAUTHORIZED)
+      //   .json(
+      //     ApiResponse.error(
+      //       HttpStatus.UNAUTHORIZED,
+      //       'Authorization header tidak ditemukan',
+      //     ),
+      //   );
     }
 
     if (!token) {
       this.logger.warn('Token is missing from the Authorization header.');
-      return res
-        .status(HttpStatus.UNAUTHORIZED)
-        .json(
-          ApiResponse.error(HttpStatus.UNAUTHORIZED, 'Token tidak ditemukan'),
-        );
+      throw new HttpException(
+        ApiResponse.error(HttpStatus.UNAUTHORIZED, 'Token tidak ditemukan'),
+        HttpStatus.UNAUTHORIZED,
+      );
+      // return res
+      //   .status(HttpStatus.UNAUTHORIZED)
+      //   .json(
+      //     ApiResponse.error(HttpStatus.UNAUTHORIZED, 'Token tidak ditemukan'),
+      //   );
     }
 
     try {
@@ -52,21 +69,32 @@ export class AuthMiddleware implements NestMiddleware {
       // Proceed to the next middleware or route handler
       next();
     } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+
       // Log the error details
       this.logger.error(
         'Token verification failed.',
-        error.stack || error.message || 'Unknown error',
+        // error.stack || error.message || 'Unknown error',
       );
 
       // Handle verification failure (e.g., invalid or expired token)
-      return res
-        .status(HttpStatus.UNAUTHORIZED)
-        .json(
-          ApiResponse.error(
-            HttpStatus.UNAUTHORIZED,
-            'Token tidak valid atau kedaluwarsa',
-          ),
-        );
+      throw new HttpException(
+        ApiResponse.error(
+          HttpStatus.UNAUTHORIZED,
+          'Token tidak valid atau kedaluwarsa',
+        ),
+        HttpStatus.UNAUTHORIZED,
+      );
+      // return res
+      //   .status(HttpStatus.UNAUTHORIZED)
+      //   .json(
+      //     ApiResponse.error(
+      //       HttpStatus.UNAUTHORIZED,
+      //       'Token tidak valid atau kedaluwarsa',
+      //     ),
+      //   );
     }
   }
 }
